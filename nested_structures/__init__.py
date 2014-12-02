@@ -1,8 +1,24 @@
 # coding: utf-8
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 
 
-Node = namedtuple('Node', 'item children')
+class Node(object):
+    def __init__(self, item, children):
+        self.item = item
+        self.children = children
+
+    def __getitem__(self, i):
+        return self.children[i].item
+
+    def __iter__(self):
+        for k, c in self.children.iteritems():
+            yield k, c
+
+    def __len__(self):
+        if self.children:
+            return len(self.children)
+        else:
+            return 0
 
 
 '''
