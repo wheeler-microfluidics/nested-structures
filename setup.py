@@ -9,6 +9,6 @@ setup(name='nested_structures',
       keywords='python nested structures',
       author='Christian Fobel',
       author_email='christian@fobel.net',
-      url='http://github.com/cfobel/nested_structures.git',
+      url='http://github.com/wheeler-microfluidics/nested_structures.git',
       license='GPL',
       packages=['nested_structures'])
