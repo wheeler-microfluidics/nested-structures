@@ -48,7 +48,7 @@ child entries of `"File"` *(i.e., `"Save"` and `"Load"`)* consist only of a
 '''
 
 
-def apply_depth_first(nodes, func, as_dict=False, parents=None):
+def apply_depth_first(nodes, func, depth=0, as_dict=False, parents=None):
     '''
     Given a structure such as the application menu layout described above, we
     may want to apply an operation to each entry to create a transformed
@@ -128,6 +128,7 @@ def apply_depth_first(nodes, func, as_dict=False, parents=None):
         item_parents = parents + [node]
         if nodes:
             children = apply_depth_first(nodes, func,
+                                         depth=depth + 1,
                                          as_dict=as_dict,
                                          parents=item_parents)
         else:
@@ -142,7 +143,7 @@ def apply_depth_first(nodes, func, as_dict=False, parents=None):
     return items
 
 
-def apply_dict_depth_first(nodes, func, as_dict=True, parents=None):
+def apply_dict_depth_first(nodes, func, depth=0, as_dict=True, parents=None, pre=None, post=None):
     '''
     This function is similar to the `apply_depth_first` except that it operates
     on the `OrderedDict`-based structure returned from `apply_depth_first` when
@@ -159,15 +160,24 @@ def apply_dict_depth_first(nodes, func, as_dict=True, parents=None):
     if parents is None:
         parents = []
 
+    node_count = len(nodes)
     for i, (k, node) in enumerate(nodes.iteritems()):
-        item = func(k, node, parents)
+        first = (i == 0)
+        last = (i == (node_count - 1))
+        if pre is not None:
+            pre(k, node, parents, first, last, depth)
+        item = func(k, node, parents, first, last, depth)
         item_parents = parents + [(k, node)]
         if node.children is not None:
             children = apply_dict_depth_first(node.children, func,
+                                              depth=depth + 1,
                                               as_dict=as_dict,
-                                              parents=item_parents)
+                                              parents=item_parents,
+                                              pre=pre, post=post)
         else:
             children = None
+        if post is not None:
+            post(k, node, parents, first, last, depth)
         if as_dict:
             items[k] = Node(item, children)
         elif children:
@@ -196,10 +206,10 @@ def collect(nested_nodes, transform=None):
     items = []
 
     if transform is None:
-        transform = lambda node, parents, nodes: node
+        transform = lambda node, parents, nodes, *args: node
 
-    def __collect__(node, parents, nodes):
-        items.append(transform(node, parents, nodes))
+    def __collect__(node, parents, nodes, first, last, depth):
+        items.append(transform(node, parents, nodes, first, last, depth))
 
     apply_depth_first(nested_nodes, __collect__)
     return items
@@ -211,8 +221,8 @@ def dict_collect(nodes, transform=None):
     if transform is None:
         transform = lambda *args: tuple(args)
 
-    def __collect__(key, node, parents):
-        items.append(transform(key, node, parents))
+    def __collect__(key, node, parents, first, last, depth):
+        items.append(transform(key, node, parents, first, last, depth))
 
     apply_dict_depth_first(nodes, __collect__)
     return items
