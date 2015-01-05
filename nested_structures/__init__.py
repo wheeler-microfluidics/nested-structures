@@ -118,13 +118,16 @@ def apply_depth_first(nodes, func, depth=0, as_dict=False, parents=None):
     if parents is None:
         parents = []
 
+    node_count = len(nodes)
     for i, node in enumerate(nodes):
+        first = (i == 0)
+        last = (i == (node_count - 1))
         if isinstance(node, tuple):
             node, nodes = node
         else:
             nodes = []
 
-        item = func(node, parents, nodes)
+        item = func(node, parents, nodes, first, last, depth)
         item_parents = parents + [node]
         if nodes:
             children = apply_depth_first(nodes, func,
